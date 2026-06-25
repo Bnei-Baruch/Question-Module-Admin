@@ -50,6 +50,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/qst-admin
-            npm ci --omit=dev
+            npm install --omit=dev
             systemctl restart qst.server.service
             echo "Deploy done — $(date)"
