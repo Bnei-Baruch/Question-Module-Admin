@@ -83,7 +83,7 @@ export default function Question(props) {
         )}
         <div style={{ marginTop: 10 }}>
           {(showTranslit || showTranslitRoom) && (
-            <div style={{ fontSize: 16, color: '#000', fontStyle: 'italic', textAlign: 'right', marginBottom: 4 }}>
+            <div style={{ fontSize: 16, color: '#000', fontStyle: 'italic', fontWeight: 'bold', textAlign: 'right', marginBottom: 4 }}>
               {showTranslit ? transliterated : user.name} {transliteratedRoom}
             </div>
           )}
