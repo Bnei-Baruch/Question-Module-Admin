@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** server.js  */
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -22,14 +22,14 @@ app.use(function (req, res, next) {
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-app.use(express.static(path.resolve('build')));
+app.use(express.static(path.resolve('dist')));
 app.use('/public', express.static(path.resolve('public')));
 app.use('/images', express.static(path.resolve('images'), { etag: true, maxAge: (1000 * 60 * 60 * 3) }));
 
 require('./server/use').use(app);
 
 app.use('*', function (req, res, next) {
-    const filename = path.join('build', 'index.html')
+    const filename = path.join('dist', 'index.html')
 
     fs.readFile(filename, function read(err, result) {
         if (err) {

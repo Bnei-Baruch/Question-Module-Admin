@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
-// const connectionString = 'mongodb://questionnaire:Shamati12@mongodb_mongo_1:27017/galaxyQuestionAdmin'
-const connectionString = 'mongodb://localhost:27017/galaxyQuestionAdmin';
+const connectionString = process.env.MONGO_URI || 'mongodb://localhost:27017/galaxyQuestionAdmin';
 
 mongoose.Promise = global.Promise;
 

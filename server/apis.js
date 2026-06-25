@@ -5,7 +5,7 @@ const cfg = require('./cfg.js');
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 const socketUtils = require('./socketUtils');
-const googleTranslate = require('google-translate')('AIzaSyCPYdW6ZkWWWjb8l9gPWI1aCePT_InsI5o');
+const googleTranslate = require('google-translate')(process.env.GOOGLE_TRANSLATE_API_KEY);
 
 /**
     Expected payload:

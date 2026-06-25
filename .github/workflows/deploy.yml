@@ -1,0 +1,53 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE: ghcr.io/bnei-baruch/question-module-admin
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Deploy on server via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ghcr.io/bnei-baruch/question-module-admin:latest
+            docker stop qst-admin || true
+            docker rm   qst-admin || true
+            docker run -d \
+              --name qst-admin \
+              --restart unless-stopped \
+              -p 2200:2200 \
+              -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+              -e GOOGLE_TRANSLATE_API_KEY="${{ secrets.GOOGLE_TRANSLATE_API_KEY }}" \
+              ghcr.io/bnei-baruch/question-module-admin:latest
