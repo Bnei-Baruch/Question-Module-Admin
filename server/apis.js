@@ -3,7 +3,6 @@ const router = express.Router();
 const db = require('./db');
 const cfg = require('./cfg.js');
 const fs = require('fs');
-const fsExtra = require('fs-extra');
 const socketUtils = require('./socketUtils');
 const googleTranslate = require('google-translate')(process.env.GOOGLE_TRANSLATE_API_KEY);
 
