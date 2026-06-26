@@ -4,11 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to deploy
-        required: false
-        default: main
 
 jobs:
   deploy:
@@ -17,8 +12,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Set up Node 20
         uses: actions/setup-node@v4
