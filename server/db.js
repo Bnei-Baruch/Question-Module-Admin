@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const connectionString = process.env.MONGO_URI || 'mongodb://localhost:27017/galaxyQuestionAdmin';
 
-mongoose.Promise = global.Promise;
-
 const UserModel = mongoose.model('User', {
     userName: String,
     userId: String,
@@ -27,9 +25,7 @@ const QuestionModel = mongoose.model('Question', {
     askForMe: { type: Boolean, default: true },
     question: {
         content: String,
-        translation: {
-            // he: String
-        }
+        translation: {}
     },
     user: {
         name: String,
@@ -49,106 +45,79 @@ const collectionMap = {
     users: UserModel,
     questions: QuestionModel,
     tags: TagsModel
-}
+};
 
-// cfg: {collection, query}
-let remove = cfg => {
-    // console.log('********* remove', cfg)
-    return new Promise((resolve, reject) => {
-        collectionMap[cfg.collection].find(cfg.query).remove(resolve);
-    });
-}
+const remove = async cfg => {
+    await collectionMap[cfg.collection].deleteMany(cfg.query);
+};
 
-// cfg: {collection, query, data}
-let edit = cfg => {
-    console.log(Date(), '******edit')
-    return new Promise((resolve, reject) => {
+const edit = async cfg => {
+    console.log(Date(), '******edit');
+    try {
         if (cfg.multi) {
-            collectionMap[cfg.collection].update(cfg.query, cfg.data, { multi: cfg.multi }, err => {
-                if (err) reject({ status: 500, data: { msg: 'db error', err: err } });
-                else resolve({});
-            });
+            await collectionMap[cfg.collection].updateMany(cfg.query, cfg.data);
+            return {};
         } else {
-            collectionMap[cfg.collection].findOneAndUpdate(cfg.query, cfg.data, { new: true }, (err, doc) => {
-                if (err) reject({ status: 500, data: { msg: 'db error', err: err } });
-                else resolve(doc);
-            })
+            return await collectionMap[cfg.collection].findOneAndUpdate(cfg.query, cfg.data, { new: true });
         }
-    });
-}
+    } catch (err) {
+        throw { status: 500, data: { msg: 'db error', err } };
+    }
+};
 
-// cfg: {collection, query}
-let get = cfg => {
+const get = async cfg => {
     console.log(Date(), '****** get', cfg.collection);
-    return new Promise((resolve, reject) => {
-        collectionMap[cfg.collection].find(cfg.query).then(data => {
-            resolve(data);
-        }, err => {
-            reject({ status: 500, data: { msg: 'db error', err: err } })
-        });
-    });
-}
+    try {
+        return await collectionMap[cfg.collection].find(cfg.query);
+    } catch (err) {
+        throw { status: 500, data: { msg: 'db error', err } };
+    }
+};
 
-// cfg: {collection, query}
-let getWithLimit = cfg => {
-    console.log('****** getWithLimit', cfg)
-    return new Promise((resolve, reject) => {
-        collectionMap[cfg.collection].find(cfg.query).limit(cfg.limit).then(data => {
-            resolve(data);
-        }, err => {
-            reject({ status: 500, data: { msg: 'db error', err: err } })
-        });
-    });
-}
+const getWithLimit = async cfg => {
+    console.log('****** getWithLimit', cfg);
+    try {
+        return await collectionMap[cfg.collection].find(cfg.query).limit(cfg.limit);
+    } catch (err) {
+        throw { status: 500, data: { msg: 'db error', err } };
+    }
+};
 
-// cfg: {collection, data}
-let create = cfg => {
-    // console.log('****** get', cfg)
-    return new Promise((resolve, reject) => {
-        let newItem = new collectionMap[cfg.collection](cfg.data);
-        newItem.save((err, item) => {
-            if (err) reject({ status: 405, data: { msg: 'DB create err', err: err } });
-            else resolve(item);
-        })
-    });
-}
+const create = async cfg => {
+    try {
+        const newItem = new collectionMap[cfg.collection](cfg.data);
+        return await newItem.save();
+    } catch (err) {
+        throw { status: 405, data: { msg: 'DB create err', err } };
+    }
+};
 
 const findOneAndUpdate = async cfg => {
     try {
-        await collectionMap[cfg.collection].findOneAndUpdate(cfg.query, cfg.data, {
+        return await collectionMap[cfg.collection].findOneAndUpdate(cfg.query, cfg.data, {
             new: true,
-            upsert: true // Make this update into an upsert
+            upsert: true
         });
     } catch (err) {
-        throw { status: 405, data: { msg: 'DB create err', err: err } };
+        throw { status: 405, data: { msg: 'DB create err', err } };
     }
-}
+};
 
 const createMany = async ({ docs, collection }) => {
-    try {
-        await collectionMap[collection].insertMany(docs);
-    } catch (err) {
-        throw err;
-    }
-}
+    await collectionMap[collection].insertMany(docs);
+};
 
 const distinct = async ({ collection, fieldName, query }) => {
-    try {
-        const vals = await collectionMap[collection].find(query).distinct(fieldName);
-        return vals;
-    } catch (err) {
-        throw err;
-    }
-}
+    return await collectionMap[collection].find(query).distinct(fieldName);
+};
 
 const connect = async () => {
     try {
-        await mongoose.connect(connectionString, { useMongoClient: true });
-        // await remove({collection: 'users', query: {}});
+        await mongoose.connect(connectionString);
         if (!fs.existsSync('./images')) fs.mkdirSync('./images');
         console.log('mongo db connection [success]');
     } catch (err) {
-        console.log('mongo db connection [error]: ' + err)
+        console.log('mongo db connection [error]: ' + err);
     }
 };
 
@@ -162,4 +131,4 @@ module.exports = {
     distinct,
     connect,
     findOneAndUpdate
-}
+};

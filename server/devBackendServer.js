@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const path = require('path');
 const morgan = require('morgan');
 const app = express();
@@ -9,8 +8,8 @@ const db = require('./db');
 const socketUtils = require('./socketUtils.js');
 
 app.use(morgan('dev'))
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/public', express.static(path.resolve('public')))
 

@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -35,7 +35,7 @@ jobs:
 
       - name: Create deployment archive
         run: |
-          tar czf /tmp/deploy.tar.gz \
+          tar czf deploy.tar.gz \
             dist/ server/ server.js \
             package.json package-lock.json \
             .env public/
@@ -46,9 +46,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: /tmp/deploy.tar.gz
+          source: deploy.tar.gz
           target: /tmp/
-          strip_components: 2
 
       - name: Extract and restart service
         uses: appleboy/ssh-action@v1
