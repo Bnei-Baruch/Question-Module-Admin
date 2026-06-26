@@ -27,7 +27,7 @@ app.use('/images', express.static(path.resolve('images'), { etag: true, maxAge: 
 
 require('./server/use').use(app);
 
-app.use('*', function (req, res, next) {
+app.use('/{*path}', function (req, res, next) {
     const filename = path.join('dist', 'index.html')
 
     fs.readFile(filename, function read(err, result) {
