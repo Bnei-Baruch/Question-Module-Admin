@@ -33,29 +33,31 @@ jobs:
           GOOGLE_TRANSLATE_API_KEY=${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
           EOF
 
-      - name: Setup SSH key
+      - name: Create deployment archive
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          tar czf /tmp/deploy.tar.gz \
+            dist/ server/ server.js \
+            package.json package-lock.json \
+            .env public/
 
-      - name: Rsync to server
-        run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='src' \
-            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/qst-admin/
+      - name: Upload archive to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: /tmp/deploy.tar.gz
+          target: /tmp/
+          strip_components: 2
 
-      - name: Install backend deps and restart service
+      - name: Extract and restart service
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            tar xzf /tmp/deploy.tar.gz -C /opt/qst-admin/
             cd /opt/qst-admin
             npm install --omit=dev
             systemctl restart qst.server.service
