@@ -4,7 +4,8 @@ const db = require('./db');
 const cfg = require('./cfg.js');
 const fs = require('fs');
 const socketUtils = require('./socketUtils');
-const googleTranslate = require('google-translate')(process.env.GOOGLE_TRANSLATE_API_KEY);
+const { Translate } = require('@google-cloud/translate').v2;
+const googleTranslate = new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY });
 
 /**
     Expected payload:
@@ -73,25 +74,19 @@ router.post('/ask', async (request, response) => {
         delete body.serialUserId;
         body.user.serialUserId = serialUserId
 
-        googleTranslate.translate(body.question.content, 'iw', async (err, translation) => {
-            if (!err) {
-                console.log(translation.translatedText);
-                body.question.translation = { he: translation.translatedText };
+        const [translatedText] = await googleTranslate.translate(body.question.content, 'he');
+        console.log(translatedText);
+        body.question.translation = { he: translatedText };
 
-                const newQuestion = await db.create({
-                    collection: 'questions', data: {
-                        ...body,
-                        timestamp: new Date().getTime()
-                    }
-                });
-
-                socketUtils.push('newQuestion', newQuestion._doc, serialUserId);
-
-                response.json(newQuestion._doc);
-            } else {
-                response.status(400).json({ err, msg: 'translation error' });
+        const newQuestion = await db.create({
+            collection: 'questions', data: {
+                ...body,
+                timestamp: new Date().getTime()
             }
         });
+
+        socketUtils.push('newQuestion', newQuestion._doc, serialUserId);
+        response.json(newQuestion._doc);
 
 
 
